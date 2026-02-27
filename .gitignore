@@ -1,0 +1,46 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# --- Virtual environments ---
+.venv/
+venv/
+ENV/
+env/
+
+# --- Flask / local config ---
+instance/
+*.log
+
+# --- Secrets / local env scripts (DO NOT COMMIT) ---
+.env
+.env.*
+set_env.bat
+*.pem
+*.key
+
+# --- Databases (local dev) ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- OS / editor junk ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

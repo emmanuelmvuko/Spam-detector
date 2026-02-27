@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Connect Gmail - Classifier</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f7f6; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
+        h2 { color: #333; margin-top: 0; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #357ae8; }
+        .note { font-size: 12px; color: #666; margin-top: 15px; line-height: 1.4; }
+        a { text-decoration: none; color: #4285f4; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Add Account</h2>
+        <form action="/register" method="POST">
+            <label>Gmail Address</label>
+            <input type="email" name="email" placeholder="example@gmail.com" required>
+
+            <button type="submit">Continue</button>
+        </form>
+        <div class="note">
+            Next you will click <strong>Connect Gmail</strong> to authorize access via Google OAuth.
+            No passwords are stored.
+        </div>
+        <br>
+        <a href="/">&larr; Back to Dashboard</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email Classifier Results</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        .Spam { color: red; font-weight: bold; }
+        .Ham { color: green; font-weight: bold; }
+        a { text-decoration: none; }
+        button { color: white; font-size: 20px; background-color: #4285f4; border-radius: 5px; border: none; padding: 8px 15px; cursor: pointer; }
+        button:hover { background-color: #357ae8; }
+        .muted { color: #666; }
+        .pill { padding: 3px 8px; border-radius: 10px; font-size: 12px; }
+        .ok { background: #e6f4ea; color: #137333; }
+        .warn { background: #fce8e6; color: #a50e0e; }
+    </style>
+</head>
+<body>
+    <h1>Real-time Email Classification</h1>
+    <a href="/register">
+        <button>Connect New Account</button>
+    </a> |
+    <a href="/manage_accounts">
+        <button>Manage/ Remove Accounts</button>
+    </a>
+    <hr>
+
+    <table>
+        <tr>
+            <th>User</th>
+            <th>Subject</th>
+            <th>Result</th>
+            <th>Confidence</th>
+            <th>Time</th>
+        </tr>
+
+        {% for mail in history %}
+        <tr>
+            <td>
+                {% if mail.user %}
+                    {{ mail.user.email }}
+                {% else %}
+                    <span class="muted">Unknown</span>
+                {% endif %}
+            </td>
+            <td>{{ mail.subject }}</td>
+            <td class="{{ mail.category }}">{{ mail.category }}</td>
+
+            {% if mail.spam_score is not none %}
+                <td>{{ (mail.spam_score * 100) | round(0) }}%</td>
+            {% else %}
+                <td class="muted">—</td>
+            {% endif %}
+
+            <td>{{ mail.timestamp }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

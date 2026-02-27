@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Accounts</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background-color: #f8f9fa; }
+        .account-card {
+            background: white; padding: 15px; margin-bottom: 10px; border-radius: 5px;
+            display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd;
+            gap: 12px;
+        }
+        .left { display: flex; flex-direction: column; gap: 4px; }
+        .right { display: flex; gap: 10px; align-items: center; }
+        .btn-delete { background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-delete:hover { background-color: #c82333; }
+        .btn-connect { background-color: #4285f4; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+        .btn-connect:hover { background-color: #357ae8; }
+        a { text-decoration: none; color: #007bff; }
+        .muted { color: #666; font-size: 13px; }
+        .status { font-size: 12px; }
+        .connected { color: #137333; }
+        .not-connected { color: #a50e0e; }
+        form { margin: 0; }
+    </style>
+</head>
+<body>
+    <h1>Connected Gmail Accounts</h1>
+    <a href="/">&larr; Back to Dashboard</a> | <a href="/register">Add New Account</a>
+    <hr>
+
+    {% for user in users %}
+    <div class="account-card">
+        <div class="left">
+            <span><strong>{{ user.email }}</strong></span>
+            {% if user.gmail_refresh_token_enc %}
+                <span class="status connected">OAuth: Connected</span>
+            {% else %}
+                <span class="status not-connected">OAuth: Not connected</span>
+                <span class="muted">Click “Connect Gmail” to authorize read access.</span>
+            {% endif %}
+        </div>
+
+        <div class="right">
+            {% if not user.gmail_refresh_token_enc %}
+            <a href="{{ url_for('routes.gmail_oauth_start', user_id=user.id) }}">
+                <button type="button" class="btn-connect">Connect Gmail</button>
+            </a>
+            {% endif %}
+
+            <form action="{{ url_for('routes.delete_user', user_id=user.id) }}" method="POST">
+                <button type="submit" class="btn-delete"
+                    onclick="return confirm('Are you sure you want to disconnect this account?')">
+                    Remove
+                </button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <p>No accounts added yet.</p>
+    {% endfor %}
+</body>
+</html>
