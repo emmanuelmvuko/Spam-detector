@@ -56,6 +56,8 @@ def classify_text(text: str, spam_threshold: float) -> tuple[str, float]:
     category = "Spam" if proba_spam >= spam_threshold else "Ham"
     return category, proba_spam
 
+app = create_app()
+
 
 if __name__ == "__main__":
     app = create_app()
