@@ -1,62 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="light">
 <head>
     <title>Manage Accounts</title>
-    <style>
-        body { font-family: sans-serif; margin: 40px; background-color: #f8f9fa; }
-        .account-card {
-            background: white; padding: 15px; margin-bottom: 10px; border-radius: 5px;
-            display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd;
-            gap: 12px;
-        }
-        .left { display: flex; flex-direction: column; gap: 4px; }
-        .right { display: flex; gap: 10px; align-items: center; }
-        .btn-delete { background-color: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-        .btn-delete:hover { background-color: #c82333; }
-        .btn-connect { background-color: #4285f4; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-        .btn-connect:hover { background-color: #357ae8; }
-        a { text-decoration: none; color: #007bff; }
-        .muted { color: #666; font-size: 13px; }
-        .status { font-size: 12px; }
-        .connected { color: #137333; }
-        .not-connected { color: #a50e0e; }
-        form { margin: 0; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Connected Gmail Accounts</h1>
-    <a href="/">&larr; Back to Dashboard</a> | <a href="/register">Add New Account</a>
-    <hr>
+    <div class="container">
 
-    {% for user in users %}
-    <div class="account-card">
-        <div class="left">
-            <span><strong>{{ user.email }}</strong></span>
-            {% if user.gmail_refresh_token_enc %}
-                <span class="status connected">OAuth: Connected</span>
-            {% else %}
-                <span class="status not-connected">OAuth: Not connected</span>
-                <span class="muted">Click “Connect Gmail” to authorize read access.</span>
+        <!-- Top nav -->
+        <div class="navbar">
+            <div class="brand">
+                <h1>Manage Accounts</h1>
+                <p>Add, connect, or remove Gmail accounts</p>
+            </div>
+            <div class="actions">
+                <a href="/"><button class="btn">Back to Dashboard</button></a>
+                <a href="/register"><button class="btn primary">Add Account</button></a>
+            </div>
+        </div>
+
+        <!-- Accounts list -->
+        <div class="card">
+            <p class="small muted" style="margin-top:0;">
+                Tip: Register an email, then click “Connect Gmail” to authorize access.
+            </p>
+
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+                {% for user in users %}
+                <div class="card" style="margin:0;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:14px;">
+                        <div>
+                            <div style="font-weight:800;">{{ user.email }}</div>
+                            <div class="small">
+                                Created: {{ user.created_at.strftime("%Y-%m-%d %H:%M:%S") if user.created_at else "—" }}
+                            </div>
+
+                            {% if user.gmail_refresh_token_enc %}
+                                <div class="pill" style="margin-top:10px;">
+                                    Status: <strong style="color: var(--success);">Connected</strong>
+                                </div>
+                            {% else %}
+                                <div class="pill" style="margin-top:10px;">
+                                    Status: <strong style="color: var(--warning);">Not connected</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+                            <a href="{{ url_for('routes.gmail_oauth_start', user_id=user.id) }}">
+                                <button class="btn primary">Connect Gmail</button>
+                            </a>
+
+                            <form method="POST" action="{{ url_for('routes.delete_user', user_id=user.id) }}"
+                                  onsubmit="return confirm('Remove {{ user.email }}? This will delete its history in this app.');">
+                                <button class="btn danger" type="submit">Remove</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if users|length == 0 %}
+              <p class="muted">No accounts connected yet.</p>
             {% endif %}
         </div>
 
-        <div class="right">
-            {% if not user.gmail_refresh_token_enc %}
-            <a href="{{ url_for('routes.gmail_oauth_start', user_id=user.id) }}">
-                <button type="button" class="btn-connect">Connect Gmail</button>
-            </a>
-            {% endif %}
-
-            <form action="{{ url_for('routes.delete_user', user_id=user.id) }}" method="POST">
-                <button type="submit" class="btn-delete"
-                    onclick="return confirm('Are you sure you want to disconnect this account?')">
-                    Remove
-                </button>
-            </form>
-        </div>
     </div>
-    {% else %}
-    <p>No accounts added yet.</p>
-    {% endfor %}
 </body>
 </html>

@@ -18,15 +18,53 @@ from preprocess import clean_text  # noqa: E402
 
 
 DATA_PATH = BASE_DIR / "spam.csv"
+OVERRIDE_PATH = BASE_DIR / "email_overrides.csv"  # <-- contains BOTH OTP ham + phishing spam
 MODEL_PATH = BASE_DIR / "spam_model.pkl"
 VECTORIZER_PATH = BASE_DIR / "vectorizer.pkl"
+
+
+def _load_overrides() -> pd.DataFrame:
+    """
+    Load override dataset  present.
+    Expected columns: label,text
+
+    label can be: ham/spam (case-insensitive). We map to 0/1.
+    """
+    if not OVERRIDE_PATH.exists():
+        return pd.DataFrame(columns=["label", "text"])
+
+    override_df = pd.read_csv(OVERRIDE_PATH)
+
+    # Normalize column names
+    override_df = override_df.rename(columns={c: c.strip().lower() for c in override_df.columns})
+
+    if not {"label", "text"}.issubset(set(override_df.columns)):
+        raise ValueError(
+            f"Overrides file must contain columns {{'label','text'}}. Found: {set(override_df.columns)}"
+        )
+
+    override_df = override_df[["label", "text"]].copy()
+
+    # Normalize labels to match spam.csv mapping later
+    override_df["label"] = (
+        override_df["label"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .map({"spam": "spam", "ham": "ham"})
+    )
+
+    override_df = override_df.dropna(subset=["label", "text"]).copy()
+    return override_df
 
 
 def main() -> None:
     if not DATA_PATH.exists():
         raise FileNotFoundError(f"Could not find dataset at: {DATA_PATH}")
 
-    # Load dataset
+    # -------------------------
+    # Load main dataset (spam.csv)
+    # -------------------------
     data = pd.read_csv(DATA_PATH, encoding="latin-1")
 
     # Expect columns: Category, Message
@@ -39,11 +77,26 @@ def main() -> None:
     data = data[["Category", "Message"]].copy()
     data.columns = ["label", "text"]
 
-    # Convert labels
+    # Normalize labels
+    data["label"] = data["label"].astype(str).str.strip().str.lower()
+    data = data.dropna(subset=["label", "text"]).copy()
+
+    # -------------------------
+    # Merge overrides (OTP ham + phishing spam) if file exists
+    # -------------------------
+    overrides = _load_overrides()
+    if not overrides.empty:
+        data = pd.concat([data, overrides], ignore_index=True)
+
+    # -------------------------
+    # Convert labels to numeric
+    # -------------------------
     data["label"] = data["label"].map({"spam": 1, "ham": 0})
     data = data.dropna(subset=["label", "text"]).copy()
 
+    # -------------------------
     # Clean text
+    # -------------------------
     data["clean_text"] = data["text"].apply(clean_text)
 
     # Split BEFORE vectorizer fit to avoid leakage

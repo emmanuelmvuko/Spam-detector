@@ -6,7 +6,11 @@ from email.header import decode_header, make_header
 import requests
 
 
+# =========================
+# Auth helpers
+# =========================
 def _auth_headers(access_token: str) -> dict[str, str]:
+    """Attach OAuth2 bearer token to every Gmail API request."""
     return {"Authorization": f"Bearer {access_token}"}
 
 
@@ -23,11 +27,25 @@ def exchange_refresh_token_for_access_token(
         },
         timeout=30,
     )
+
+    #  debug section
+    if not resp.ok:
+        print("Token exchange failed:")
+        print("Status:", resp.status_code)
+        print("Body:", resp.text)  # <-- THIS will say invalid_client/invalid_grant etc.
+
     resp.raise_for_status()
     return resp.json()["access_token"]
 
 
+# =========================
+# Message parsing helpers
+# =========================
 def _get_header(headers: list[dict], name: str) -> str:
+    """
+    Extract a header (like Subject) from Gmail's message headers list,
+    and decode RFC2047 encoding safely.
+    """
     for h in headers or []:
         if h.get("name", "").lower() == name.lower():
             raw = h.get("value", "")
@@ -38,8 +56,16 @@ def _get_header(headers: list[dict], name: str) -> str:
     return ""
 
 
+def _extract_sender(headers: list[dict]) -> str:
+    # "From" header often looks like: 'Google <no-reply@google.com>'
+    return _get_header(headers, "From") or ""
+
+
 def _extract_plain_text(payload: dict) -> str:
-    # Gmail messages are a nested MIME tree
+    """
+    Extract the first text/plain part from Gmail's nested MIME payload.
+    Falls back to empty string if none exists.
+    """
     if not payload:
         return ""
     mime_type = payload.get("mimeType", "")
@@ -59,10 +85,20 @@ def _extract_plain_text(payload: dict) -> str:
     return ""
 
 
+# =========================
+# Gmail API: fetch messages
+# =========================
 def fetch_unread_emails_gmail_api(access_token: str, max_results: int = 25) -> list[dict]:
     """
-    Returns a list of dicts:
-      { "id": gmail_message_id, "subject": str, "body": str }
+    Fetch unread Gmail messages and return normalized dicts:
+
+      {
+        "id": gmail_message_id,
+        "subject": str,
+        "body": str,
+        "sender": str,
+        "labelIds": list[str]   <-- used to detect Promotions
+      }
     """
     list_resp = requests.get(
         "https://gmail.googleapis.com/gmail/v1/users/me/messages",
@@ -85,17 +121,35 @@ def fetch_unread_emails_gmail_api(access_token: str, max_results: int = 25) -> l
         msg_resp.raise_for_status()
         msg = msg_resp.json()
 
+        # NOTE: labelIds includes CATEGORY_PROMOTIONS for Promotions tab messages
+        label_ids = msg.get("labelIds") or []
+
         headers = (msg.get("payload") or {}).get("headers") or []
         subject = _get_header(headers, "Subject") or "No Subject"
+        sender = _extract_sender(headers)
         body = _extract_plain_text(msg.get("payload") or {})
 
-        emails_list.append({"id": msg_id, "subject": subject, "body": body})
+        emails_list.append(
+            {
+                "id": msg_id,
+                "subject": subject,
+                "body": body,
+                "sender": sender,
+                "labelIds": label_ids,
+            }
+        )
 
     return emails_list
 
 
+# =========================
+# Gmail API: mark as read
+# =========================
 def mark_as_read(access_token: str, gmail_message_id: str) -> None:
-    # Remove UNREAD label
+    """
+    Remove the UNREAD label from a Gmail message.
+    This prevents re-processing the same message on the next poll.
+    """
     resp = requests.post(
         f"https://gmail.googleapis.com/gmail/v1/users/me/messages/{gmail_message_id}/modify",
         headers={**_auth_headers(access_token), "Content-Type": "application/json"},

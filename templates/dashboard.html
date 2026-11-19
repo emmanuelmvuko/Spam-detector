@@ -1,62 +1,340 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Email Classifier Results</title>
-    <style>
-        body { font-family: sans-serif; margin: 40px; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-        .Spam { color: red; font-weight: bold; }
-        .Ham { color: green; font-weight: bold; }
-        a { text-decoration: none; }
-        button { color: white; font-size: 20px; background-color: #4285f4; border-radius: 5px; border: none; padding: 8px 15px; cursor: pointer; }
-        button:hover { background-color: #357ae8; }
-        .muted { color: #666; }
-        .pill { padding: 3px 8px; border-radius: 10px; font-size: 12px; }
-        .ok { background: #e6f4ea; color: #137333; }
-        .warn { background: #fce8e6; color: #a50e0e; }
-    </style>
+    <title>AI Spam Classification System</title>
+
+    <!-- Shared styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Real-time Email Classification</h1>
-    <a href="/register">
-        <button>Connect New Account</button>
-    </a> |
-    <a href="/manage_accounts">
-        <button>Manage/ Remove Accounts</button>
-    </a>
-    <hr>
+    <div class="container">
 
-    <table>
-        <tr>
-            <th>User</th>
-            <th>Subject</th>
-            <th>Result</th>
-            <th>Confidence</th>
-            <th>Time</th>
-        </tr>
+        <!-- =========================================================
+             Navbar: project name + actions
+             ========================================================= -->
+        <div class="navbar">
+            <div class="brand">
+                <h1>AI Spam Classification System</h1>
+                <p>Spam • Ham • Promotions (Promotions comes from Gmail’s label)</p>
+            </div>
 
-        {% for mail in history %}
-        <tr>
-            <td>
-                {% if mail.user %}
-                    {{ mail.user.email }}
+            <div class="actions">
+                <!-- Theme toggle -->
+                <div class="theme-toggle" role="group" aria-label="Theme selector">
+                    <button class="btn" type="button" data-theme-btn="light" aria-pressed="false">Light</button>
+                    <button class="btn" type="button" data-theme-btn="dark" aria-pressed="false">Dark</button>
+                    <button class="btn" type="button" data-theme-btn="system" aria-pressed="false">System</button>
+                </div>
+
+                <a href="/register"><button class="btn primary">Connect New Account</button></a>
+                <a href="/manage_accounts"><button class="btn">Manage Accounts</button></a>
+
+                <!-- Clear dashboard data (DB-only) -->
+                <form method="POST" action="{{ url_for('routes.clear_dashboard_data') }}"
+                      onsubmit="return confirm('Clear all detected emails from the dashboard database? This does NOT delete Gmail.');"
+                      style="margin:0;">
+                    <button class="btn danger" type="submit">Clear Dashboard Data</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             Stats + last updated (EAT)
+             ========================================================= -->
+        <div class="card compact">
+            <div class="stats">
+                <div class="stat">
+                    <div class="k">Total scanned</div>
+                    <div class="v">{{ total_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="k">Spam</div>
+                    <div class="v">{{ spam_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="k">Ham</div>
+                    <div class="v">{{ ham_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="k">Promotions</div>
+                    <div class="v">{{ promotions_count }}</div>
+                </div>
+            </div>
+
+            <div class="small" style="margin-top:10px;">
+                Last updated (EAT):
+                {% if last_updated %}
+                    <strong>{{ last_updated.strftime("%Y-%m-%d %H:%M:%S") }}</strong>
                 {% else %}
-                    <span class="muted">Unknown</span>
+                    <span class="muted">—</span>
                 {% endif %}
-            </td>
-            <td>{{ mail.subject }}</td>
-            <td class="{{ mail.category }}">{{ mail.category }}</td>
+            </div>
+        </div>
 
-            {% if mail.spam_score is not none %}
-                <td>{{ (mail.spam_score * 100) | round(0) }}%</td>
-            {% else %}
-                <td class="muted">—</td>
-            {% endif %}
+        <!-- =========================================================
+             Controls: filter + search + preference
+             ========================================================= -->
+        <div class="card">
+            <div class="controls">
 
-            <td>{{ mail.timestamp }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+                <!-- LEFT: filter chips + search -->
+                <div>
+                    <div class="chips" style="margin-bottom:12px;">
+                        <span class="small">Filter:</span>
+
+                        {% set cats = ["All", "Spam", "Ham", "Promotions"] %}
+                        {% for c in cats %}
+                            <a href="{{ url_for('routes.dashboard', category=c, q=q, per_page=per_page) }}">
+                                <button class="chip {% if category == c %}active{% endif %}">
+                                    {{ c }}
+                                </button>
+                            </a>
+                        {% endfor %}
+                    </div>
+
+                    <form method="GET" action="{{ url_for('routes.dashboard') }}" class="searchbar">
+                        <!-- Preserve category/per_page when searching -->
+                        <input type="hidden" name="category" value="{{ category }}">
+                        <input type="hidden" name="per_page" value="{{ per_page }}">
+
+                        <input class="input" name="q" value="{{ q }}" placeholder="Search by subject...">
+                        <button class="btn" type="submit">Search</button>
+
+                        {% if q %}
+                          <a href="{{ url_for('routes.dashboard', category=category, per_page=per_page) }}">
+                            <button class="btn" type="button">Clear</button>
+                          </a>
+                        {% endif %}
+                    </form>
+                </div>
+
+                <!-- RIGHT: small preferences card -->
+                <div class="card compact" style="margin:0;">
+                    <div style="font-weight:800; margin-bottom:8px;">Preferences</div>
+
+                    <form method="POST" action="{{ url_for('routes.set_promotions_as_ham', category=category, q=q, per_page=per_page) }}">
+                        <label class="small" style="display:flex; gap:10px; align-items:center;">
+                            <input type="checkbox" name="enabled" {% if promotions_as_ham %}checked{% endif %}>
+                            Show Promotions as Ham
+                        </label>
+                        <div class="small muted" style="margin-top:8px;">
+                            Display-only. Database unchanged.
+                        </div>
+
+                        <div style="margin-top:10px;">
+                            <button class="btn" type="submit">Save</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- =========================================================
+             Table: Subject "Show more/less" to reduce clutter
+             ========================================================= -->
+        <div class="card">
+            <div class="table-wrap">
+                <table>
+                    <tr>
+                        <th>User</th>
+                        <th>Subject</th>
+                        <th>Result</th>
+                        <th>Confidence</th>
+                        <th>Time (EAT)</th>
+                    </tr>
+
+                    {% if history|length == 0 %}
+                    <tr>
+                        <td colspan="5" class="muted" style="padding:18px;">
+                            No emails to show yet.
+                            {% if q or category != "All" %}
+                              Try clearing the search/filter.
+                            {% else %}
+                              If you just cleared the dashboard database, wait for the worker to fetch new unread emails.
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% for mail in history %}
+                    <tr>
+                        <td>
+                            {% if mail.user %}
+                                {{ mail.user.email }}
+                            {% else %}
+                                <span class="muted">Unknown</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Subject with show more/less -->
+                        <td>
+                            <span class="subject"
+                                  data-full="{{ mail.subject | e }}"
+                                  data-limit="70"></span>
+                        </td>
+
+                        <td><span class="badge {{ mail.display_category }}">{{ mail.display_category }}</span></td>
+
+                        {% if mail.spam_score is not none %}
+                            <td>{{ (mail.spam_score * 100) | round(0) }}%</td>
+                        {% else %}
+                            <td class="muted">—</td>
+                        {% endif %}
+
+                        <td>
+                            {% if mail.display_timestamp %}
+                                {{ mail.display_timestamp.strftime("%Y-%m-%d %H:%M:%S") }}
+                            {% else %}
+                                <span class="muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; gap:10px; flex-wrap:wrap;">
+                <div class="small muted">
+                    Page {{ page }} • Showing {{ history|length }} item(s) • Per page: {{ per_page }}
+                </div>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    {% if has_prev %}
+                        <a href="{{ url_for('routes.dashboard', category=category, q=q, page=prev_page, per_page=per_page) }}">
+                            <button class="btn">Previous</button>
+                        </a>
+                    {% endif %}
+                    {% if has_next %}
+                        <a href="{{ url_for('routes.dashboard', category=category, q=q, page=next_page, per_page=per_page) }}">
+                            <button class="btn primary">Load more</button>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =========================================================
+         JS: Theme toggle (Light / Dark / System)
+         - stores choice in localStorage under "theme"
+         - applies: <html data-theme="light|dark"> or removes attr for system
+         ========================================================= -->
+    <script>
+      (function () {
+        const STORAGE_KEY = "theme"; // "light" | "dark" | "system"
+        const root = document.documentElement;
+
+        function getPreferredSystemTheme() {
+          return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        }
+
+        function applyTheme(mode) {
+          // mode: "light" | "dark" | "system"
+          if (!mode) mode = "system";
+
+          if (mode === "system") {
+            // remove explicit override => CSS can follow prefers-color-scheme,
+            // but we still want stable tokens, so we don't set data-theme.
+            root.removeAttribute("data-theme");
+          } else {
+            root.setAttribute("data-theme", mode);
+          }
+
+          // Update button pressed state
+          const btns = document.querySelectorAll("[data-theme-btn]");
+          btns.forEach((b) => {
+            const v = b.getAttribute("data-theme-btn");
+            b.setAttribute("aria-pressed", String(v === mode));
+            if (v === mode) b.classList.add("active-theme");
+            else b.classList.remove("active-theme");
+          });
+        }
+
+        function loadTheme() {
+          const saved = localStorage.getItem(STORAGE_KEY) || "system";
+          applyTheme(saved);
+        }
+
+        // Bind buttons
+        document.addEventListener("click", (e) => {
+          const btn = e.target.closest("[data-theme-btn]");
+          if (!btn) return;
+
+          const mode = btn.getAttribute("data-theme-btn");
+          localStorage.setItem(STORAGE_KEY, mode);
+          applyTheme(mode);
+        });
+
+        // If user selected system, react to OS theme changes
+        const mql = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+        if (mql) {
+          mql.addEventListener("change", () => {
+            const saved = localStorage.getItem(STORAGE_KEY) || "system";
+            if (saved === "system") applyTheme("system");
+          });
+        }
+
+        loadTheme();
+      })();
+    </script>
+
+    <!-- =========================================================
+         JS: Subject "Show more / Show less"
+         ========================================================= -->
+    <script>
+      (function () {
+        const nodes = Array.from(document.querySelectorAll(".subject"));
+        for (const n of nodes) {
+          const full = n.getAttribute("data-full") || "";
+          const limit = parseInt(n.getAttribute("data-limit") || "70", 10);
+
+          if (full.length <= limit) {
+            n.textContent = full;
+            continue;
+          }
+
+          const shortText = full.slice(0, limit).trim() + "... ";
+
+          const shortSpan = document.createElement("span");
+          shortSpan.textContent = shortText;
+
+          const moreLink = document.createElement("a");
+          moreLink.href = "#";
+          moreLink.textContent = "Show more";
+          moreLink.style.fontWeight = "700";
+
+          const lessLink = document.createElement("a");
+          lessLink.href = "#";
+          lessLink.textContent = "Show less";
+          lessLink.style.fontWeight = "700";
+
+          const fullSpan = document.createElement("span");
+          fullSpan.textContent = full + " ";
+
+          let expanded = false;
+
+          function render() {
+            n.innerHTML = "";
+            if (!expanded) {
+              n.appendChild(shortSpan);
+              n.appendChild(moreLink);
+            } else {
+              n.appendChild(fullSpan);
+              n.appendChild(lessLink);
+            }
+          }
+
+          moreLink.addEventListener("click", (e) => { e.preventDefault(); expanded = true; render(); });
+          lessLink.addEventListener("click", (e) => { e.preventDefault(); expanded = false; render(); });
+
+          render();
+        }
+      })();
+    </script>
 </body>
 </html>

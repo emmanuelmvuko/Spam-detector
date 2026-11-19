@@ -22,10 +22,10 @@ def create_app():
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
         "DATABASE_URL", f"sqlite:///{default_db_path.as_posix()}"
     )
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-only-change-me")
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", " ")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    app.config["CHECK_INTERVAL_SECONDS"] = int(os.getenv("CHECK_INTERVAL_SECONDS", "60"))
+    app.config["CHECK_INTERVAL_SECONDS"] = int(os.getenv("CHECK_INTERVAL_SECONDS", "40"))
     app.config["SPAM_THRESHOLD"] = float(os.getenv("SPAM_THRESHOLD", "0.5"))
 
     app.config["GOOGLE_CLIENT_ID"] = os.getenv("GOOGLE_CLIENT_ID", "")

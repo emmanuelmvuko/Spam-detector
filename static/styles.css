@@ -1,0 +1,438 @@
+/* =========================================================
+   Theme tokens (default = dark)
+   ========================================================= */
+
+:root {
+  /* allow native form controls to match */
+  color-scheme: dark;
+
+  --radius: 16px;
+
+  /* dark theme */
+  --page-bg:
+    linear-gradient(135deg, rgba(11,16,32,0.88), rgba(16,26,53,0.88)),
+    url("/static/bg.jpg");
+
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-2: rgba(255, 255, 255, 0.10);
+  --surface-3: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.16);
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.66);
+
+  --shadow: 0 10px 30px rgba(0,0,0,0.35);
+
+  --primary: #3d8bfd;
+  --primary-soft: rgba(61,139,253,0.18);
+
+  --danger: #ff6b6b;
+  --danger-soft: rgba(255,107,107,0.12);
+
+  --success: #2ee59d;
+  --success-soft: rgba(46,229,157,0.12);
+
+  --warning: #ffcc66;
+  --warning-soft: rgba(255,204,102,0.12);
+
+  --table-bg: rgba(0,0,0,0.12);
+  --table-head-bg: rgba(20, 30, 60, 0.62);
+  --row-hover: rgba(255,255,255,0.035);
+  --focus: rgba(110,168,254,0.9);
+}
+
+/* Auto light theme when OS is light */
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+
+    /* clean light background */
+    --page-bg: linear-gradient(180deg, #f7f9ff, #eef2ff);
+
+    /* solid surfaces (no glass) */
+    --surface: #ffffff;
+    --surface-2: #f6f8ff;
+    --surface-3: #eef3ff;
+    --border: rgba(20, 40, 80, 0.14);
+
+    --text: rgba(12, 18, 32, 0.92);
+    --muted: rgba(12, 18, 32, 0.62);
+
+    --shadow: 0 10px 30px rgba(25, 35, 70, 0.10);
+
+    --primary: #2f6fed;
+    --primary-soft: rgba(47,111,237,0.12);
+
+    --danger: #e5484d;
+    --danger-soft: rgba(229,72,77,0.10);
+
+    --success: #138a55;
+    --success-soft: rgba(19,138,85,0.10);
+
+    --warning: #9a6b00;
+    --warning-soft: rgba(154,107,0,0.12);
+
+    --table-bg: #ffffff;
+    --table-head-bg: #f3f6ff;
+    --row-hover: rgba(47,111,237,0.06);
+
+    --focus: rgba(47,111,237,0.75);
+  }
+}
+
+/* =========================================================
+   Manual theme override (for the Light/Dark/System toggle)
+   - When <html data-theme="light"> or "dark" is present, it wins
+   - "system" is implemented by removing data-theme attr
+   ========================================================= */
+
+html[data-theme="light"] {
+  color-scheme: light;
+
+  --page-bg: linear-gradient(180deg, #f7f9ff, #eef2ff);
+
+  --surface: #ffffff;
+  --surface-2: #f6f8ff;
+  --surface-3: #eef3ff;
+  --border: rgba(20, 40, 80, 0.14);
+
+  --text: rgba(12, 18, 32, 0.92);
+  --muted: rgba(12, 18, 32, 0.62);
+
+  --shadow: 0 10px 30px rgba(25, 35, 70, 0.10);
+
+  --primary: #2f6fed;
+  --primary-soft: rgba(47,111,237,0.12);
+
+  --danger: #e5484d;
+  --danger-soft: rgba(229,72,77,0.10);
+
+  --success: #138a55;
+  --success-soft: rgba(19,138,85,0.10);
+
+  --warning: #9a6b00;
+  --warning-soft: rgba(154,107,0,0.12);
+
+  --table-bg: #ffffff;
+  --table-head-bg: #f3f6ff;
+  --row-hover: rgba(47,111,237,0.06);
+
+  --focus: rgba(47,111,237,0.75);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --page-bg:
+    linear-gradient(135deg, rgba(11,16,32,0.88), rgba(16,26,53,0.88)),
+    url("/static/bg.jpg");
+
+  --surface: rgba(255, 255, 255, 0.07);
+  --surface-2: rgba(255, 255, 255, 0.10);
+  --surface-3: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.16);
+
+  --text: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.66);
+
+  --shadow: 0 10px 30px rgba(0,0,0,0.35);
+
+  --primary: #3d8bfd;
+  --primary-soft: rgba(61,139,253,0.18);
+
+  --danger: #ff6b6b;
+  --danger-soft: rgba(255,107,107,0.12);
+
+  --success: #2ee59d;
+  --success-soft: rgba(46,229,157,0.12);
+
+  --warning: #ffcc66;
+  --warning-soft: rgba(255,204,102,0.12);
+
+  --table-bg: rgba(0,0,0,0.12);
+  --table-head-bg: rgba(20, 30, 60, 0.62);
+  --row-hover: rgba(255,255,255,0.035);
+
+  --focus: rgba(110,168,254,0.9);
+}
+
+/* =========================================================
+   Base
+   ========================================================= */
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  color: var(--text);
+  background: var(--page-bg);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.container {
+  width: min(1160px, 94vw);
+  margin: 26px auto 70px auto;
+}
+
+/* =========================================================
+   Navbar / cards now use solid surfaces (light) or glass (dark)
+   ========================================================= */
+
+.navbar,
+.card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* keep glass only in dark mode
+   - also when manual override is explicitly dark */
+@media (prefers-color-scheme: dark) {
+  .navbar,
+  .card {
+    backdrop-filter: blur(12px);
+  }
+}
+html[data-theme="dark"] .navbar,
+html[data-theme="dark"] .card {
+  backdrop-filter: blur(12px);
+}
+/* make sure light override isn't glassy even if OS is dark */
+html[data-theme="light"] .navbar,
+html[data-theme="light"] .card {
+  backdrop-filter: none;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.brand { display: flex; flex-direction: column; line-height: 1.15; }
+.brand h1 { font-size: 18px; margin: 0; letter-spacing: 0.2px; }
+.brand p { margin: 6px 0 0 0; font-size: 12px; color: var(--muted); }
+
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+.card { margin-top: 14px; padding: 16px; }
+.card.compact { padding: 12px 14px; }
+
+/* =========================================================
+   Theme toggle UI (Light / Dark / System)
+   ========================================================= */
+
+.theme-toggle {
+  display: inline-flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.theme-toggle .btn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  transform: none; /* avoid lift inside pill */
+}
+
+.theme-toggle .btn:hover {
+  transform: none;
+}
+
+.theme-toggle .btn.active-theme {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: var(--primary-soft);
+}
+
+/* =========================================================
+   Stats
+   ========================================================= */
+
+.stats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 900px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .stats { grid-template-columns: 1fr; } }
+
+.stat {
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+.stat .k { font-size: 12px; color: var(--muted); }
+.stat .v { font-size: 18px; font-weight: 850; margin-top: 4px; }
+
+/* =========================================================
+   Buttons / chips (better contrast + focus)
+   ========================================================= */
+
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 750;
+  transition: transform 120ms ease, background 120ms ease, border 120ms ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  background: var(--surface-3);
+}
+
+.btn:focus,
+.btn:focus-visible,
+.input:focus,
+.input:focus-visible,
+.chip:focus,
+.chip:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.btn.primary {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: var(--primary-soft);
+}
+
+.btn.danger {
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  background: var(--danger-soft);
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.chip {
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 750;
+  font-size: 13px;
+}
+
+.chip.active {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: var(--primary-soft);
+}
+
+/* =========================================================
+   Controls / inputs
+   ========================================================= */
+
+.controls {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 340px;
+  align-items: start;
+}
+@media (max-width: 980px) { .controls { grid-template-columns: 1fr; } }
+
+.searchbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.input {
+  flex: 1;
+  min-width: 240px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  outline: none;
+}
+
+.input::placeholder { color: color-mix(in srgb, var(--muted) 80%, transparent); }
+
+/* =========================================================
+   Table (crisper in light mode)
+   ========================================================= */
+
+.table-wrap {
+  overflow: auto;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--table-bg);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px;
+  background: var(--table-bg);
+}
+
+th, td {
+  padding: 12px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: var(--table-head-bg);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+tr:hover td { background: var(--row-hover); }
+
+/* =========================================================
+   Badges (keep category colors but improve light mode contrast)
+   ========================================================= */
+
+.badge {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 850;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.badge.Spam {
+  color: color-mix(in srgb, var(--danger) 85%, black);
+  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.badge.Ham {
+  color: color-mix(in srgb, var(--success) 85%, black);
+  background: var(--success-soft);
+  border-color: color-mix(in srgb, var(--success) 40%, transparent);
+}
+
+.badge.Promotions {
+  color: color-mix(in srgb, var(--warning) 85%, black);
+  background: var(--warning-soft);
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+}
+
+.muted { color: var(--muted); }
+.small { font-size: 12px; color: var(--muted); }
